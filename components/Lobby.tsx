@@ -1,7 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Play, Pencil, BarChart2, Settings, HelpCircle } from 'lucide-react';
+import { Play, Pencil, BarChart2, HelpCircle, X } from 'lucide-react';
+import LeaderboardList from './LeaderboardList';
+
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby8tPRDvHZqciSWLs30fG2t9Rg5Xn1Pr3mfHYFxBp2XuqPBuJJQKP7pWeLkX-VZy756/exec";
 
 interface LobbyProps {
   onStart: (name: string) => void;
@@ -9,6 +12,7 @@ interface LobbyProps {
 
 export default function Lobby({ onStart }: LobbyProps) {
   const [name, setName] = useState('');
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +76,10 @@ export default function Lobby({ onStart }: LobbyProps) {
         </form>
 
         <div className="flex gap-8 mt-10">
-          <button className="flex items-center gap-2 text-slate-500 font-bold hover:text-green-600 transition-colors">
+          <button 
+            onClick={() => setShowLeaderboard(true)}
+            className="flex items-center gap-2 text-slate-500 font-bold hover:text-green-600 transition-colors"
+          >
             <BarChart2 className="w-5 h-5" /> 랭킹 보기
           </button>
           <button className="flex items-center gap-2 text-slate-500 font-bold hover:text-green-600 transition-colors">
@@ -81,32 +88,37 @@ export default function Lobby({ onStart }: LobbyProps) {
         </div>
       </div>
 
-      {/* Footer Simulation Items */}
-      <div className="mt-12 flex gap-4">
-        <div className="bg-amber-100 text-amber-700 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2">
-          <span>★</span> 일일 목표: 500 XP
-        </div>
-        <div className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2">
-          <span>👤</span> 24.5K 온라인
-        </div>
-      </div>
-
       {/* Navbar Simulation */}
       <div className="fixed bottom-0 left-0 right-0 h-20 bg-slate-900 border-t border-slate-800/50 flex items-center justify-around px-4">
         <div className="flex flex-col items-center gap-1 text-purple-400">
-          <div className="w-full h-1 bg-purple-400 absolute top-0 left-0 w-1/3"></div>
+          <div className="w-full h-1 bg-purple-400 absolute top-0 left-0 w-1/2"></div>
           <Play className="w-6 h-6" />
           <span className="text-[10px] uppercase font-bold">플레이</span>
         </div>
-        <div className="flex flex-col items-center gap-1 text-slate-500 hover:text-white transition-colors">
+        <button 
+          onClick={() => setShowLeaderboard(true)}
+          className="flex flex-col items-center gap-1 text-slate-500 hover:text-white transition-colors"
+        >
           <BarChart2 className="w-6 h-6" />
           <span className="text-[10px] uppercase font-bold">랭킹</span>
-        </div>
-        <div className="flex flex-col items-center gap-1 text-slate-500 hover:text-white transition-colors">
-          <Settings className="w-6 h-6" />
-          <span className="text-[10px] uppercase font-bold">설정</span>
-        </div>
+        </button>
       </div>
+
+      {showLeaderboard && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-[#fbfbf9] rounded-[40px] w-full max-w-lg relative overflow-hidden shadow-2xl">
+            <button 
+              onClick={() => setShowLeaderboard(false)}
+              className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 z-10 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="p-2 pt-6">
+              <LeaderboardList webAppUrl={WEB_APP_URL} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

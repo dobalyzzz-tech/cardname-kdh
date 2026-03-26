@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Play, Pause, RotateCcw, Home, Timer as TimerIcon, BarChart2, Settings, History } from 'lucide-react';
 import Card from './Card';
 import ResultScreen from './ResultScreen';
@@ -32,9 +32,10 @@ export default function GameBoard({ userName, onHome }: GameBoardProps) {
   const [score, setScore] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const hasSaved = useRef(false);
 
   // 여기에 구글 앱스 스크립트 웹 앱 URL을 입력하세요.
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwlGI58qZJdW5RWw-U2_Ufoj7rGcmfz9zLsoouDp0rOd7jMDjkd1zNhvHwlU16goCT_/exec"; 
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby8tPRDvHZqciSWLs30fG2t9Rg5Xn1Pr3mfHYFxBp2XuqPBuJJQKP7pWeLkX-VZy756/exec"; 
 
   const saveToSpreadsheet = useCallback(async (finalTime: string, finalScore: number) => {
     if (!WEB_APP_URL || isSaving) return;
@@ -42,7 +43,7 @@ export default function GameBoard({ userName, onHome }: GameBoardProps) {
     try {
       await fetch(WEB_APP_URL, {
         method: "POST",
-        mode: "no-cors", // Apps Script doPost handles this
+        mode: "no-cors", 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           username: userName,
@@ -56,7 +57,15 @@ export default function GameBoard({ userName, onHome }: GameBoardProps) {
     } finally {
       setIsSaving(false);
     }
-  }, [userName, isSaving]);
+  }, [userName, isSaving, WEB_APP_URL]);
+
+  // 게임 종료 시 자동으로 점수 저장
+  useEffect(() => {
+    if (isFinished && !hasSaved.current) {
+      hasSaved.current = true;
+      saveToSpreadsheet(formatTime(time), score);
+    }
+  }, [isFinished, saveToSpreadsheet, time, score]);
 
   useEffect(() => {
     setMounted(true);
@@ -74,6 +83,7 @@ export default function GameBoard({ userName, onHome }: GameBoardProps) {
     setIsFinished(false);
     setMoves(0);
     setScore(0);
+    hasSaved.current = false;
   }, []);
 
   useEffect(() => {
@@ -99,16 +109,18 @@ export default function GameBoard({ userName, onHome }: GameBoardProps) {
     setFlipped(newFlipped);
 
     if (newFlipped.length === 2) {
-      setMoves(m => m + 1);
+      const currentMoves = moves + 1;
+      setMoves(currentMoves);
+      
       const [first, second] = newFlipped;
       if (cards[first].id === cards[second].id) {
+        const matchContribution = 200 - (currentMoves > 10 ? (currentMoves - 10) * 5 : 0);
         setMatches((m) => [...m, first, second]);
-        setScore(s => s + 200 - (moves > 10 ? (moves - 10) * 5 : 0));
+        setScore(s => s + matchContribution);
         setFlipped([]);
+        
         if (matches.length + 2 === cards.length) {
           setIsFinished(true);
-          // 게임이 완료되면 결과를 스프레드시트에 전송
-          saveToSpreadsheet(formatTime(time), score + 200 - (moves > 10 ? (moves - 10) * 5 : 0));
         }
       } else {
         setTimeout(() => {

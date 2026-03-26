@@ -3,11 +3,7 @@
 import { useState, useEffect } from 'react';
 import { RotateCcw, Home, Trophy, Star, ArrowRight } from 'lucide-react';
 
-interface LeaderboardItem {
-  username: string;
-  finishTime: string;
-  score?: number;
-}
+import LeaderboardList from './LeaderboardList';
 
 interface ResultScreenProps {
   userName: string;
@@ -20,29 +16,6 @@ interface ResultScreenProps {
 }
 
 export default function ResultScreen({ userName, time, moves, score, onRestart, onHome, webAppUrl }: ResultScreenProps) {
-  const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        const res = await fetch(webAppUrl);
-        const data = await res.json();
-        setLeaderboard(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("랭킹 로드 실패:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (webAppUrl) {
-      // 신규 기록이 서버에 반영될 시간을 고려하여 약간의 지연 후 호출
-      const timer = setTimeout(fetchLeaderboard, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [webAppUrl]);
-
   return (
     <div className="fixed inset-0 bg-[#fbfbf9] z-50 flex flex-col items-center justify-between p-8 animate-in fade-in zoom-in duration-500 overflow-y-auto">
       {/* Header */}
@@ -91,47 +64,7 @@ export default function ResultScreen({ userName, time, moves, score, onRestart, 
         </div>
 
         {/* Live Leaderboard */}
-        <div className="w-full bg-slate-50/50 rounded-[40px] p-8 border border-slate-100/50">
-          <h3 className="text-slate-800 font-bold text-xl mb-6">🏆 실시간 랭킹 Top 3 (낮은 시간 순)</h3>
-          
-          {loading ? (
-            <div className="flex flex-col items-center py-10 gap-3">
-              <div className="w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-slate-400 font-medium">기록 불러오는 중...</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {leaderboard.length > 0 ? (
-                leaderboard.map((item, index) => (
-                  <div 
-                    key={index}
-                    className={`flex justify-between items-center px-6 py-5 rounded-3xl transition-all shadow-sm ${
-                      item.username === userName 
-                        ? 'bg-amber-600 border-4 border-amber-400 shadow-xl scale-[1.02]' 
-                        : 'bg-white border border-slate-100'
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-pixel text-[10px] ${
-                        item.username === userName ? 'bg-amber-400 text-amber-900' : 'bg-slate-50 text-slate-400 border border-slate-100'
-                      }`}>
-                        {index + 1}
-                      </div>
-                      <span className={`font-bold uppercase ${item.username === userName ? 'text-white' : 'text-slate-700'}`}>
-                        {item.username} {item.username === userName && "(본인)"}
-                      </span>
-                    </div>
-                    <span className={`font-pixel text-sm ${item.username === userName ? 'text-white' : 'text-amber-600'}`}>
-                      {item.finishTime}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-10 text-slate-400 font-medium">아직 등록된 기록이 없습니다.</div>
-              )}
-            </div>
-          )}
-        </div>
+        <LeaderboardList webAppUrl={webAppUrl} userName={userName} />
       </div>
 
       {/* Footer Actions */}
